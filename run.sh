@@ -13,6 +13,10 @@ function init {
     mkdir -p normalized/test/500Palavras
     mkdir -p normalized/test/1000Palavras
     mkdir -p ngrams
+    for f in $TRAIN/*
+    do
+        mkdir -p ngrams/$(basename $f)
+    done
 }
 
 function normalize {
@@ -37,17 +41,6 @@ function normalize {
     done
 }
 
-function ngramize {
-    for f in $OUTNORM/train/*
-    do
-        NAME=$(basename $f .txt)
-        echo "Ngramming $NAME..."
-        mkdir -p ngrams/$NAME
-        python ngrams.py $f "ngrams/$NAME"
-    done
-}
-
 
 init
 normalize
-ngramize
