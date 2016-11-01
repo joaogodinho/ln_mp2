@@ -7,83 +7,97 @@ import os
 import sys
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 
-PATH = 'Corpora'
+PATH = 'normalized/train'
+PATH2= 'normalized/test'
+AUTHORS = [
+        'AlmadaNegreiros',
+        'CamiloCasteloBranco',
+        'EcaDeQueiros',
+        'JoseRodriguesSantos',
+        'JoseSaramago',
+        'LuisaMarquesSilva'
+]
+TOKEN_REGEX = r'\b\w+-?\w*\b'
 
 
-def unigram(content):
-    cv = CountVectorizer(token_pattern=r'\b\w+-?\w*\b', min_df=0)
 
-    dtm = cv.fit_transform(content)
+def gram_output(arr, vocab):
+    unigrams = ''
+    bigrams = ''
+    for tag, count in zip(vocab, arr):
+        if count > 0:
+            if ' ' in tag:
+                bigrams += '{}\t{}\n'.format(tag, count)
+            else:
+                unigrams += '{}\t{}\n'.format(tag, count)
+    return unigrams, bigrams
+
+
+def gram_smooth_output(arr, vocab):
+    unigrams = ''
+    bigrams = ''
+    for tag, count in zip(vocab, arr):
+        if ' ' in tag:
+            bigrams += '{}\t{}\n'.format(tag, count + 1)
+        else:
+            unigrams += '{}\t{}\n'.format(tag, count + 1)
+    return unigrams, bigrams
+
+
+def generate_grams(content):
+    cv = CountVectorizer(token_pattern=TOKEN_REGEX, ngram_range=(1, 2))
+    dtm = cv.fit_transform(train)
     dtm = dtm.toarray()
     vocab = cv.get_feature_names()
+    for idx, author in enumerate(AUTHORS):
+        unigrams, bigrams = gram_output(dtm[idx], vocab)
+        unigrams_smooth, bigrams_smooth = gram_smooth_output(dtm[idx], vocab)
+        with open('ngrams/' + author + '/unigrams.txt', 'w', encoding='UTF-8') as f:
+            f.write(unigrams)
+        with open('ngrams/' + author + '/bigrams.txt', 'w', encoding='UTF-8') as f:
+            f.write(bigrams)
+        with open('ngrams/' + author + '/unigrams_smooth.txt', 'w', encoding='UTF-8') as f:
+            f.write(unigrams_smooth)
+        with open('ngrams/' + author + '/bigrams_smooth.txt', 'w', encoding='UTF-8') as f:
+            f.write(bigrams_smooth)
 
-    dist = np.sum(dtm, axis=0)
-    content = ''
-    for tag, count in zip(vocab, dist):
-        content += '{}\t{}\n'.format(tag, count)
-    print(content)
-    return content
-
-
-def bigram(content):
-    cv = CountVectorizer(token_pattern=r'\b\w+-?\w*\b', ngram_range=(2, 2))
-
-    dtm = cv.fit_transform(content)
-    dtm = dtm.toarray()
-    vocab = cv.get_feature_names()
-
-    dist = np.sum(dtm, axis=0)
-    content = ''
-    for tag, count in zip(vocab, dist):
-        content += '{}\t{}\n'.format(tag, count)
-    return content
-
-
-# if __name__ == '__main__':
-#     assert len(sys.argv) == 3
-#     input = sys.argv[1]
-#     outdir = sys.argv[2]
-# 
-#     content = ''
-#     with open(input, 'r', encoding='UTF-8') as f:
-#         content = f.read()
-#     content = content.split('\n')
-#     content = list(filter(lambda x: x is not '', content))
-#     content = "\n".join(content)
-#     content = content.replace('_', '')
-#     unigrams = unigram([content])
-#     bigrams = bigram([content])
-#     with open(outdir + '/unigram.txt', 'w', encoding='UTF-8') as f:
-#         f.write(unigrams)
-#     with open(outdir + '/bigram.txt', 'w', encoding='UTF-8') as f:
-#         f.write(bigrams)
 
 if __name__ == '__main__':
-    # assert len(sys.argv) == 3
-    #input = sys.argv[1]
-    #outdir = sys.argv[2]
-
-    content = []
-    for f in sys.argv[1:]:
-        with open(f, 'r', encoding='UTF-8') as file:
+    train = []
+    for author in AUTHORS:
+        with open(PATH + '/' + author + '.txt', 'r', encoding='UTF-8') as file:
             temp = file.read()
             temp = temp.split('\n')
-            temp = list(filter(lambda x: x is not '', temp))
-            temp = "\n".join(temp)
+            temp = '\n'.join(list(filter(lambda x: x is not '', temp)))
             temp = temp.replace('_', '')
-            content += [temp]
-    print(unigram(content))
-    # with open(input, 'r', encoding='UTF-8') as f:
-    #     content = f.read()
-    # content = content.split('\n')
-    # content = list(filter(lambda x: x is not '', content))
-    # content = "\n".join(content)
-    # content = content.replace('_', '')
-    # unigrams = unigram([content])
-    # bigrams = bigram([content])
-    # with open(outdir + '/unigram.txt', 'w', encoding='UTF-8') as f:
-    #     f.write(unigrams)
-    # with open(outdir + '/bigram.txt', 'w', encoding='UTF-8') as f:
-    #     f.write(bigrams)
+            train += [temp]
+    # Generate the (uni/bi)grams files for evaluation
+    # generate_grams(train)
+    test = []
+    for i in range(6):
+        with open(PATH2 + '/500Palavras/text{}.txt'.format(i+1), 'r', encoding='UTF-8') as file:
+            temp = file.read()
+            temp = temp.split('\n')
+            temp = '\n'.join(list(filter(lambda x: x is not '', temp)))
+            temp = temp.replace('_', '')
+            test += [temp]
+
+    cv = CountVectorizer(token_pattern=TOKEN_REGEX, ngram_range=(1, 1), max_features=100)
+    dtm = cv.fit_transform(train + test)
+    dtm = dtm.toarray()
+    dist = np.round(1 - cosine_similarity(dtm), 2)
+
+    # Generate table header
+    header = ''
+    for auth in AUTHORS:
+        header += auth[:5] + '\t'
+    for i in range(6):
+        header += 'text{}\t'.format(i+1)
+
+    # Print table
+    print(header)
+    print('\n'.join([''.join(['{:.2f}\t'.format(item) for item in row]) for row in dist]))
+
