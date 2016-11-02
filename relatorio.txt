@@ -1,0 +1,95 @@
+Língua Natural - Relatório do Mini-Projeto Nº 2
+70577 – João Godinho
+70643 – João Ferreira
+
+Para esta segunda parte do mini-projeto, o grupo decidiu utilizar a biblioteca scikit-learn (http://scikit-learn.org/) para gerar os modelos e classificar os textos.
+
+A normalização dos textos foi feita com base na pontuação, tendo-se introduzido espaços à volta dos caracteres !"#$%&()*+,./:;<=>?@[\]^_`{|}~ mantendo-se assim palavras hifenizadas (e.g. fez-se) e contrações (e.g. d'água). Foram também introduzidos espaços à volta de travessões (2 ou mais hífens).
+
+A geração dos ngramas foi feita com base na seguinte expressão regular: \b\w+\'?\w*-?\w*\b, permitindo capturar palavras hifenizações e contrações.
+
+De modo a conseguir classificar os textos a partir dos ngramas, o grupo escolheu utilizar um classificador com base na semelhança do cosseno. Este classificador considera cada texto como um vetor num espaço de N dimensões, onde N é o número de ngramas e o comprimento de cada coordenada é a frequência do ngrama. A semelhança do cosseno calcula o ângulo entre vetores, sendo que vetores iguais têm uma semelhança de 1 e vetores perpendiculares semelhança 0. O resultado final é apresentado como (1 - cos a), indicando que quanto menor é o valor, mais semelhanças há entre os textos.
+
+A seguinte tabela foi gerada como baseline para as experiências que se seguem, e representa a diferença entre os autores e os textos de teste, tendo em conta unigramas e bigramas.
+
+(uni/bi)grams all texts:
+        Almad   Camil   EcaDe   JoseR   JoseS   Luisa   text1   text2   text3   text4   text5   text6   text1   text2   text3   text4   text5   text6
+Almad   0.00    0.03    0.04    0.05    0.04    0.05    0.28    0.23    0.20    0.27    0.24    0.28    0.20    0.15    0.15    0.18    0.14    0.19
+Camil   0.03    0.00    0.03    0.04    0.03    0.04    0.28    0.24    0.20    0.27    0.24    0.25    0.20    0.17    0.15    0.18    0.13    0.16
+EcaDe   0.04    0.03    0.00    0.04    0.06    0.05    0.32    0.25    0.21    0.23    0.22    0.26    0.23    0.14    0.16    0.14    0.12    0.17
+JoseR   0.05    0.04    0.04    0.00    0.02    0.03    0.27    0.24    0.18    0.29    0.29    0.20    0.19    0.18    0.13    0.20    0.16    0.12
+JoseS   0.04    0.03    0.06    0.02    0.00    0.02    0.22    0.25    0.19    0.32    0.29    0.22    0.15    0.19    0.13    0.22    0.17    0.14
+Luisa   0.05    0.04    0.05    0.03    0.02    0.00    0.26    0.27    0.17    0.29    0.27    0.23    0.18    0.19    0.12    0.20    0.16    0.15
+text1   0.28    0.28    0.32    0.27    0.22    0.26    0.00    0.44    0.39    0.55    0.50    0.41    0.09    0.41    0.34    0.48    0.40    0.35
+text2   0.23    0.24    0.25    0.24    0.25    0.27    0.44    0.00    0.35    0.43    0.42    0.43    0.39    0.11    0.31    0.38    0.33    0.35
+text3   0.20    0.20    0.21    0.18    0.19    0.17    0.39    0.35    0.00    0.41    0.41    0.34    0.32    0.31    0.08    0.34    0.31    0.28
+text4   0.27    0.27    0.23    0.29    0.32    0.29    0.55    0.43    0.41    0.00    0.33    0.50    0.46    0.33    0.38    0.09    0.28    0.41
+text5   0.24    0.24    0.22    0.29    0.29    0.27    0.50    0.42    0.41    0.33    0.00    0.50    0.43    0.31    0.37    0.30    0.10    0.41
+text6   0.28    0.25    0.26    0.20    0.22    0.23    0.41    0.43    0.34    0.50    0.50    0.00    0.35    0.39    0.31    0.40    0.37    0.07
+text1   0.20    0.20    0.23    0.19    0.15    0.18    0.09    0.39    0.32    0.46    0.43    0.35    0.00    0.35    0.27    0.39    0.31    0.28
+text2   0.15    0.17    0.14    0.18    0.19    0.19    0.41    0.11    0.31    0.33    0.31    0.39    0.35    0.00    0.26    0.27    0.24    0.31
+text3   0.15    0.15    0.16    0.13    0.13    0.12    0.34    0.31    0.08    0.38    0.37    0.31    0.27    0.26    0.00    0.31    0.26    0.24
+text4   0.18    0.18    0.14    0.20    0.22    0.20    0.48    0.38    0.34    0.09    0.30    0.40    0.39    0.27    0.31    0.00    0.22    0.31
+text5   0.14    0.13    0.12    0.16    0.17    0.16    0.40    0.33    0.31    0.28    0.10    0.37    0.31    0.24    0.26    0.22    0.00    0.28
+text6   0.19    0.16    0.17    0.12    0.14    0.15    0.35    0.35    0.28    0.41    0.41    0.07    0.28    0.31    0.24    0.31    0.28    0.00
+
+
+1ª Experiência
+
+Foram utilizados os seguintes critérios:
+- Sem distinção entre maiúsculas/minúsculas.
+- Só Unigramas.
+- Todos os Unigramas.
+
+Resultados:
+Unigrams:
+        text1   text2   text3   text4   text5   text6   text1   text2   text3   text4   text5   text6
+Almad   0.21   *0.16*   0.12    0.20    0.17    0.21    0.15   *0.09*   0.09    0.13    0.09    0.14
+Camil   0.20    0.17    0.12    0.21    0.17    0.18    0.14    0.11    0.09    0.14    0.08    0.12
+EcaDe   0.24    0.17    0.12   *0.17*  *0.14*   0.19    0.17   *0.09*   0.10   *0.09*  *0.07*   0.12
+JoseR   0.20    0.17   *0.10*   0.22    0.22   *0.13*   0.13    0.12    0.08    0.14    0.11   *0.08*
+JoseS  *0.15*   0.17    0.11    0.25    0.22    0.16   *0.10*   0.13    0.08    0.17    0.12    0.10
+Luisa   0.19    0.20   *0.10*   0.22    0.19    0.17    0.13    0.13   *0.07*   0.14    0.11    0.10
+
+Enquanto a maioria dos textos foram corretamente atribuídos ao respetivo autor, o texto 5 foi incorretamente identificado como sendo da autoria de Eça de Queirós (tanto a versão de 500 como a de 1000 linhas). Para além deste erro, surgiu um impasse relativamente aos autores do texto 3 de 500 linhas e do texto 2 de 1000 linhas.
+
+
+2ª Experiência
+
+Foram utilizados os seguintes critérios:
+- Sem distinção entre maiúsculas/minúsculas.
+- Só Bigramas.
+- Todos os Bigramas.
+
+Resultados:
+Bigrams:
+        text1   text2   text3   text4   text5   text6   text1   text2   text3   text4   text5   text6
+Almad   0.28   *0.23*   0.20    0.27    0.24    0.27    0.20   *0.15*   0.15    0.18    0.14    0.19
+Camil   0.28    0.25    0.20    0.28    0.24    0.24    0.20    0.17    0.14    0.19    0.13    0.16
+EcaDe   0.31    0.25    0.20   *0.24*  *0.22*   0.25    0.22   *0.15*   0.15   *0.14*  *0.12*   0.16
+JoseR   0.27    0.24    0.18    0.29    0.29   *0.20*   0.19    0.18    0.13    0.19    0.16   *0.12*
+JoseS  *0.22*   0.25    0.19    0.31    0.29    0.22   *0.15*   0.18    0.13    0.21    0.16    0.14
+Luisa   0.26    0.27   *0.17*   0.29    0.27    0.23    0.18    0.18   *0.12*   0.19    0.16    0.15
+Comparativamente aos resultados obtidos na 1ª Experiência, estes foram semelhantes. O texto 3 de 500 linhas passou a ser corretamente identificado (na 1ª Experiência surgiu um impasse) mas o texto 2 de 1000 linhas continua a obter resultados iguais aos da 1ª Experiência. Os problemas com o texto 5 persistem, sendo que estes continuam a ser atribuídos a Eça de Queirós.
+
+
+3ª Experiência
+
+Foram utilizados os seguintes critérios:
+- Sem distinção entre maiúsculas/minúsculas. 
+- Só Unigramas.
+- Foram excluídos os 20 Unigramas mais frequentes (['a', 'as', 'com', 'como', 'da', 'de', 'do', 'e', 'em', 'no', 'não', 'o', 'os', 'para', 'por', 'que', 'se', 'um', 'uma', 'é']).
+
+Resultados:
+Unigrams with top 20 stop words:
+        text1   text2   text3   text4   text5   text6   text1   text2   text3   text4   text5   text6
+Almad   0.63   *0.53*   0.61    0.60    0.61    0.59    0.58   *0.50*   0.54    0.52    0.54    0.51
+Camil   0.65    0.58    0.63    0.60   *0.54*   0.59    0.59    0.54    0.55    0.52   *0.46*   0.51
+EcaDe   0.64    0.57    0.59   *0.53*   0.56    0.53    0.58   *0.50*   0.51   *0.45*   0.49    0.46
+JoseR   0.51    0.63    0.53    0.64    0.67   *0.43*   0.47    0.59    0.42    0.58    0.60   *0.36*
+JoseS  *0.47*   0.60    0.53    0.65    0.67    0.48   *0.41*   0.56    0.42    0.58    0.59    0.41
+Luisa   0.56    0.65   *0.45*   0.70    0.71    0.51    0.51    0.61   *0.34*   0.64    0.64    0.45
+
+O objetivo desta 3ª e última experiência é identificar a influência dos 20 Unigramas mais frequentes na identificação dos autores. Visto que estes representam uma percentagem significativa dos documentos, o grupo procurou obter resultados relacionados com Unigramas mais específicos de cada autor, excluindo os 20 Unigramas referidos.
+Comparativamente à 1ª Experiência, a distância entre os textos aumentou consideravelmente após as alterações efetuadas. No entanto, esta alteração também resultou num melhoramento da identificação do autor dos textos. Com exceção do texto 2 de 1000 linhas (no qual a sua identificação terminou num impasse entre Almada Negreiros e Eça de Queirós), todos os outros textos passaram a ser corretamente identificados com margens significativas.
+Os resultados obtidos nesta experiência foram bastante positivos comparados tanto aos da 1ª como da 2ª experiência, demonstrando que a exclusão de alguns dos Unigramas mais comuns é essencial para uma melhor classificação dos textos.

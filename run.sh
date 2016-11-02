@@ -44,3 +44,4 @@ function normalize {
 
 init
 normalize
+python ngrams.py
